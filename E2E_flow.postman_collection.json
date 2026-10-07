@@ -1,0 +1,749 @@
+{
+  "info": {
+    "_postman_id": "e6406429-e527-416f-805b-5ac63a0d58e0",
+    "name": "E2E flow",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "10680629"
+  },
+  "item": [
+    {
+      "name": "Sign in as Teacher",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const submittedEmail = \"Valln1938@gustr.com\";",
+              "let response;",
+              "",
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Content-Type is JSON\", function () {",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^application\\/json\\b/i);",
+              "});",
+              "",
+              "pm.test(\"Response time is under 2000 ms\", function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+              "});",
+              "",
+              "pm.test(\"Response body is valid JSON\", function () {",
+              "    pm.expect(function () {",
+              "        response = pm.response.json();",
+              "    }).not.to.throw();",
+              "});",
+              "",
+              "if (response) {",
+              "    pm.test(\"Response contains a user object and non-empty token string\", function () {",
+              "        pm.expect(response).to.have.property(\"user\").that.is.an(\"object\");",
+              "        pm.expect(response).to.have.property(\"token\").that.is.a(\"string\").and.not.empty;",
+              "    });",
+              "",
+              "    pm.test(\"User role is TEACHER\", function () {",
+              "        pm.expect(response.user).to.be.an(\"object\");",
+              "        pm.expect(response.user.role).to.eql(\"TEACHER\");",
+              "    });",
+              "",
+              "    pm.test(\"User email matches the submitted email case-insensitively\", function () {",
+              "        pm.expect(response.user).to.be.an(\"object\");",
+              "        pm.expect(response.user.email).to.be.a(\"string\");",
+              "        pm.expect(response.user.email.toLowerCase()).to.eql(submittedEmail.toLowerCase());",
+              "    });",
+              "",
+              "    if (typeof response.token === \"string\" && response.token.trim().length > 0) {",
+              "        pm.environment.set(\"teacherToken\", response.token);",
+              "    }",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "packages": {},
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"Valln1938@gustr.com\",\n  \"password\": \"qwerty123\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/sign-in",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "sign-in"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "new quiz",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();",
+              "",
+              "pm.environment.set(\"quiz_id\", response.id);",
+              "",
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{teacherToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Demo Quiz - test Yuliia\",\n  \"totalScore\": 18,\n  \"passingPercentage\": 75,\n  \"showStopperQuestion\": 1,\n  \"questions\": [\n    {\n      \"type\": \"TEXTUAL\",\n      \"question\": \"What is your name?\",\n      \"score\": 5\n    },\n    {\n      \"type\": \"SINGLE_CHOICE\",\n      \"question\": \"Which city is city largest in California?\",\n      \"score\": 7,\n      \"answer\": 2,\n      \"hasOtherOption\": false,\n      \"options\": [\n        \"San Francisco\",\n        \"Sacramento\",\n        \"Los Angeles\",\n        \"Redding\"\n      ]\n    },\n    {\n      \"type\": \"MULTIPLE_CHOICE\",\n      \"question\": \"Who was apple founded by?\",\n      \"score\": 6,\n      \"answers\": [\n        0,\n        1,\n        2\n      ],\n      \"hasOtherOption\": true,\n      \"options\": [\n        \"Steve Jobs\",\n        \"Steve Wozniak\",\n        \"Ronald Wayne\",\n        \"Ronald Reagan\"\n      ]\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/quiz",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "quiz"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "update quiz",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Correct quiz was updated\", function () {",
+              "    const response = pm.response.json();",
+              "    const quizId = Number(pm.environment.get(\"quiz_id\"));",
+              "",
+              "    pm.expect(response.id).to.eql(quizId);",
+              "});",
+              "",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{teacherToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Demo Quiz\",\n  \"totalScore\": 18,\n  \"passingPercentage\": 75,\n  \"showStopperQuestion\": 1,\n  \"questions\": [\n    {\n      \"type\": \"TEXTUAL\",\n      \"question\": \"What is your name?\",\n      \"score\": 5\n    },\n    {\n      \"type\": \"SINGLE_CHOICE\",\n      \"question\": \"Which city is city largest in California?\",\n      \"score\": 7,\n      \"answer\": 2,\n      \"hasOtherOption\": false,\n      \"options\": [\n        \"San Francisco\",\n        \"Sacramento\",\n        \"Los Angeles\",\n        \"Redding\"\n      ]\n    },\n    {\n      \"type\": \"MULTIPLE_CHOICE\",\n      \"question\": \"Who was apple founded by?\",\n      \"score\": 6,\n      \"answers\": [\n        0,\n        1,\n        2\n      ],\n      \"hasOtherOption\": true,\n      \"options\": [\n        \"Steve Jobs\",\n        \"Steve Wozniak\",\n        \"Ronald Wayne\",\n        \"Ronald Reagan\"\n      ]\n    }\n  ],\n  \"id\": {{quiz_id}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/quiz",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "quiz"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "quizzes as Teacher",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Created quiz is present in all quizzes\", function () {",
+              "    const response = pm.response.json();",
+              "    const quizId = Number(pm.environment.get(\"quiz_id\"));",
+              "",
+              "    const quiz = response.find(quiz => quiz.id === quizId);",
+              "",
+              "    pm.expect(quiz).to.exist;",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{teacherToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"Valln1938@gustr.comones.com\",\n  \"password\": \"qwerty123\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/quizzes",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "quizzes"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get users",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Created student exists in the users list\", function () {",
+              "    const response = pm.response.json();",
+              "    const studentId = Number(pm.environment.get(\"student_id\"));",
+              "",
+              "    const student = response.find(user => user.id === studentId);",
+              "",
+              "    pm.expect(student).to.exist;",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{teacherToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"Valln1938@gustr.comones.com\",\n  \"password\": \"qwerty123\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "assign quiz to student",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Correct quiz is assigned to correct student\", function () {",
+              "    const response = pm.response.json();",
+              "",
+              "    const studentId = Number(pm.environment.get(\"student_id\"));",
+              "    const quizId = Number(pm.environment.get(\"quiz_id\"));",
+              "",
+              "    const assignment = response.find(item =>",
+              "        item.userId === studentId && item.quiz.id === quizId",
+              "    );",
+              "",
+              "    pm.expect(assignment).to.exist;",
+              "    pm.expect(assignment.status).to.eql(\"ASSIGNED\");",
+              "",
+              "    pm.environment.set(\"assignment_id\", assignment.id);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{teacherToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "\n{\n    \"quizId\": {{quiz_id}}, \n    \"userIds\": [{{student_id}}]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/assignment",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "assignment"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "assignments as Teacher",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{teacherToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"quizId\": {{quiz_id}},\n  \"userIds\": \"[{{student_id}}]\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/assignments",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "assignments"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Sign in as Student",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "assignments as Student",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Assigned quiz exists in student's assignments\", function () {",
+              "    const response = pm.response.json();",
+              "    const assignmentId = Number(pm.environment.get(\"assignment_id\"));",
+              "",
+              "    const assignment = response.find(item => item.id === assignmentId);",
+              "",
+              "    pm.expect(assignment).to.exist;",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{studentToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/my-assignments",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "my-assignments"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "submit assignment as Student",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{studentToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"assignmentId\": {{assignment_id}},\n    \"answers\": [\n        {\n            \"answer\": null,\n            \"textAnswer\": \"Solomia\"\n        },\n        {\n            \"answer\": 2,\n            \"textAnswer\": \"\"\n        },\n        {\n            \"answer\": [0, 1, 2],\n            \"textAnswer\": \"\"\n        }\n    ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/submit-assignment",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "submit-assignment"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "grade assignment as Teacher",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();",
+              "",
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Assignment is graded\", function () {",
+              "    pm.expect(response.status).to.eql(\"GRADED\");",
+              "});",
+              "",
+              "pm.test(\"Result is PASSED\", function () {",
+              "    pm.expect(response.result).to.eql(\"PASSED\");",
+              "});",
+              "",
+              "pm.test(\"Assignment was graded by teacher\", function () {",
+              "    pm.expect(response.gradedBy).to.eql(\"TEACHER\");",
+              "});",
+              "",
+              "pm.test(\"Teacher score was saved\", function () {",
+              "    pm.expect(response.additionalScores).to.include(5);",
+              "});",
+              "",
+              "pm.test(\"Teacher comment was saved\", function () {",
+              "    pm.expect(response.comments).to.include(\"Teacher comment\");",
+              "});",
+              "",
+              "pm.test(\"Teacher summary was saved\", function () {",
+              "    pm.expect(response.summary).to.eql(\"Summary from teacher\");",
+              "});",
+              "",
+              "pm.test(\"Graded date is populated\", function () {",
+              "    pm.expect(response.gradedAt).to.not.be.null;",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{teacherToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"summary\": \"Summary from teacher\",\n  \"result\": \"PASSED\",\n  \"grades\": [\n    {\n      \"comment\": \"Teacher comment\",\n      \"additionalScore\": 5\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/assignment/{{assignment_id}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "assignment",
+            "{{assignment_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "grades as Student",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();",
+              "",
+              "const assignmentId = Number(pm.environment.get(\"assignment_id\"));",
+              "const quizId = Number(pm.environment.get(\"quiz_id\"));",
+              "",
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const gradedAssignment = response.find(item =>",
+              "    item.id === assignmentId &&",
+              "    item.quiz.id === quizId",
+              ");",
+              "",
+              "pm.test(\"Student can see grade for the assigned quiz\", function () {",
+              "    pm.expect(gradedAssignment).to.exist;",
+              "    pm.expect(gradedAssignment.status).to.eql(\"GRADED\");",
+              "    pm.expect(gradedAssignment.result).to.eql(\"PASSED\");",
+              "    pm.expect(gradedAssignment.gradedBy).to.eql(\"TEACHER\");",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{studentToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"quizId\": {{quiz_id}},\n  \"userIds\": \"[{{student_id}}]\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/my-grades",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "my-grades"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Quiz by Teacher",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{teacherToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"quizId\": {{quiz_id}},\n  \"userIds\": \"[{{student_id}}]\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/quiz/{{quiz_id}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "quiz",
+            "{{quiz_id}}"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
