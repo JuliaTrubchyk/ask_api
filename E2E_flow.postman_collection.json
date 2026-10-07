@@ -442,9 +442,81 @@
     },
     {
       "name": "Sign in as Student",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const submittedEmail = \"valln1938@cuvox.de\";",
+              "let response;",
+              "",
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Content-Type is JSON\", function () {",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^application\\/json\\b/i);",
+              "});",
+              "",
+              "pm.test(\"Response time is under 2000 ms\", function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+              "});",
+              "",
+              "pm.test(\"Response body is valid JSON\", function () {",
+              "    pm.expect(function () {",
+              "        response = pm.response.json();",
+              "    }).not.to.throw();",
+              "});",
+              "",
+              "if (response) {",
+              "    pm.test(\"Response contains a user object and non-empty token string\", function () {",
+              "        pm.expect(response).to.have.property(\"user\").that.is.an(\"object\");",
+              "        pm.expect(response).to.have.property(\"token\").that.is.a(\"string\").and.not.empty;",
+              "    });",
+              "",
+              "    pm.test(\"User role is STUDENT\", function () {",
+              "        pm.expect(response.user).to.be.an(\"object\");",
+              "        pm.expect(response.user.role).to.eql(\"STUDENT\");",
+              "    });",
+              "",
+              "    pm.test(\"User email matches the submitted email case-insensitively\", function () {",
+              "        pm.expect(response.user).to.be.an(\"object\");",
+              "        pm.expect(response.user.email).to.be.a(\"string\");",
+              "        pm.expect(response.user.email.toLowerCase()).to.eql(submittedEmail.toLowerCase());",
+              "    });",
+              "",
+              "    if (typeof response.token === \"string\" && response.token.trim().length > 0) {",
+              "        pm.environment.set(\"studentToken\", response.token);",
+              "    }",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "request": {
-        "method": "GET",
-        "header": []
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"valln1938@cuvox.de\",\n  \"password\": \"zxc890\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/sign-in",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "sign-in"
+          ]
+        }
       },
       "response": []
     },
